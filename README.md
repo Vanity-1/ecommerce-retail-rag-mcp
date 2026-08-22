@@ -1,6 +1,6 @@
 # E-commerce Retail RAG + MCP 客服系统
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) [![RAG](https://img.shields.io/badge/RAG-多源融合-red.svg)]() [![MCP](https://img.shields.io/badge/Protocol-MCP-green.svg)]() [![ADK](https://img.shields.io/badge/Google-ADK-orange.svg)]() [![LLM](https://img.shields.io/badge/LLM-Ollama-8A2BE2.svg)]()
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) [![RAG](https://img.shields.io/badge/RAG-多源融合-red.svg)]() [![MCP](https://img.shields.io/badge/Protocol-MCP-green.svg)]() [![ADK](https://img.shields.io/badge/Google-ADK-orange.svg)]() [![LLM](https://img.shields.io/badge/LLM-Ollama-8A2BE2.svg)]() [![Blog](https://img.shields.io/badge/二次开发踩坑手记-在线博客-blueviolet)](https://Vanity-1.github.io/)
 
 一个用于电商/零售场景的**多源检索增强生成（RAG）客服系统**。基于 Google ADK 编排 Agent，检索商品目录与退货/配送政策，并经 **RRF（Reciprocal Rank Fusion）多源融合**排序后，让 LLM 基于**带出处的上下文**生成可靠回答，杜绝幻觉。
 
