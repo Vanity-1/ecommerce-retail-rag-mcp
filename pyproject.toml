@@ -1,0 +1,17 @@
+# E-commerce RAG with Gemma3:270m + Ollama + ChromaDB + MCP
+
+## Python
+python_version = ">=3.10"
+
+[tool.black]
+line-length = 100
+
+[tool.flake8]
+max-line-length = 100
+# TOML requires lists to be written as arrays, not comma-separated bare tokens.
+extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = 3.10
+warn_return_any = true
+warn_unused_configs = true
