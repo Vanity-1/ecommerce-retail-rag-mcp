@@ -1,0 +1,32 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Chroma / vector data
+chroma-data/
+.vector_db/
+vector_db/
+
+# 预计算嵌入缓存（体积大且可由 _precompute_embeddings.py 重建）
+scripts/embedding_index.json
+scripts/embeddings_cache.npy
+scripts/_rebuild.py
+
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
