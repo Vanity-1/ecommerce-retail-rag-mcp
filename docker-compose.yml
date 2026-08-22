@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: ["ollama:/root/.ollama"]
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    ports: ["8001:8001"]
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8001
+
+  api:
+    build: ./
+    depends_on: [ollama, chroma]
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8001
+      LOG_LEVEL: INFO
+    ports: ["8000:8000"]
+
+volumes:
+  ollama:
