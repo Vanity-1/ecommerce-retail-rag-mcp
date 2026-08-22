@@ -1,0 +1,11 @@
+# ADK Evaluation Cases (placeholder)
+
+cases:
+  - id: retail-search-1
+    input:
+      query: "wireless headphones under $100"
+    expectations:
+      groundedness: 
+        must_reference: ["returns policy", "price"]
+      relevance:
+        keywords: ["headphones", "wireless"]
