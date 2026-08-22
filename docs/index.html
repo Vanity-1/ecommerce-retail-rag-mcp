@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 二次开发踩坑手记</title>
+<style>
+  :root{--bg:#0f1420;--card:#1a2233;--text:#e6ebf5;--muted:#9aa7bd;--accent:#4f8cff;--border:#26314a}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:40px 20px}
+  .wrap{max-width:860px;margin:0 auto}
+  header{margin-bottom:36px}
+  .tag{display:inline-block;font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:2px 12px;margin-bottom:14px}
+  h1{font-size:30px;font-weight:700;margin-bottom:8px}
+  .sub{color:var(--muted);font-size:15px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;text-decoration:none;color:inherit;transition:transform .15s,border-color .15s;display:block}
+  .card:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .card .num{font-size:12px;color:var(--muted);letter-spacing:1px}
+  .card h2{font-size:19px;margin:6px 0 8px;color:var(--text)}
+  .card p{font-size:13.5px;color:var(--muted)}
+  .card .meta{margin-top:12px;font-size:12px;color:var(--accent)}
+  footer{margin-top:44px;color:var(--muted);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tag">电商零售 RAG + MCP Agent · 二次开发实录</span>
+    <h1>RAG 二次开发踩坑手记</h1>
+    <p class="sub">把一个骨架项目改造成「能现场跑、可量化验证」的 RAG 客服系统，过程中遇到的真实问题和解法。</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="RAG二开踩坑记录.html">
+      <div class="num">Article · 01</div>
+      <h2>嵌入模型一致性：为什么 384 会撞上 768</h2>
+      <p>向量库维度不一致、Ollama 嵌入不可用、模型混用导致的检索失败 —— 如何用配置守卫和预计算缓存彻底解决。</p>
+      <div class="meta">读文章 →</div>
+    </a>
+    <a class="card" href="RRF对比实验报告.html">
+      <div class="num">Experiment · 02</div>
+      <h2>RRF 融合 vs 直接拼接：量化对比实验</h2>
+      <p>弱源被强源淹没怎么办？12 条查询的 Top-3 命中率从 9/12 提升到 12/12，用一个算法让排序可解释。</p>
+      <div class="meta">看报告 →</div>
+    </a>
+  </div>
+
+  <footer>多源检索 · 嵌入模型一致性 · RRF 融合 —— 数据驱动的二次开发实践</footer>
+</div>
+</body>
+</html>
