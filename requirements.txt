@@ -1,0 +1,16 @@
+chromadb
+fastapi
+uvicorn[standard]
+requests
+pydantic
+python-dotenv
+httpx
+pytest
+pytest-asyncio
+flake8
+black
+mypy
+# ADK orchestration references. The included agents/ examples use the classic
+# `adk` import path; install `google-adk` (>=0.5, `from google.adk...`) when you
+# need the supported, actively-maintained ADK — see docs/adk-integration.md.
+google-adk
