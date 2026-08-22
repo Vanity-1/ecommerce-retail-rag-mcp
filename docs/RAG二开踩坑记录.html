@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实战踩坑：电商 RAG + 多Agent 客服系统二开记录</title>
+<style>
+  :root{--bg:#f8fafc;--card:#fff;--ink:#0f172a;--dim:#64748b;--line:#e2e8f0;--acc:#0ea5e9;--acc2:#6366f1;--code:#0f172a;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;line-height:1.85;padding:0 0 80px}
+  header{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;padding:64px 24px;text-align:center}
+  header h1{font-size:28px;max-width:760px;margin:0 auto}
+  header .sub{margin-top:12px;color:#e0f2fe;font-size:15px}
+  .tags{margin-top:18px}
+  .tags span{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:3px 14px;font-size:12px;margin:4px}
+  .wrap{max-width:820px;margin:-28px auto 0;padding:0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 34px;box-shadow:0 6px 24px rgba(15,23,42,.06);margin-bottom:34px}
+  h2{font-size:22px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  h2 .n{background:var(--acc);color:#fff;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+  h3{font-size:16px;margin:20px 0 8px}
+  p{margin:10px 0}
+  code{background:#eef2ff;color:#4338ca;padding:2px 7px;border-radius:5px;font-size:13.5px;font-family:Consolas,monospace}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:16px 18px;overflow:auto;font-size:13px;margin:12px 0;font-family:Consolas,monospace;line-height:1.6}
+  pre code{background:none;color:inherit;padding:0}
+  .warn{background:#fef2c7;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}
+  .ok{background:#ecfdf5;border-left:4px solid #10b981;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}
+  .err{background:#fef2f2;border-left:4px solid #ef4444;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}
+  ul{margin:8px 0 8px 22px}
+  li{margin:6px 0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+  th{background:#eef2ff;color:#3730a3}
+  .kpis{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0}
+  .kpi{flex:1;min-width:150px;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .kpi .v{font-size:24px;font-weight:700;color:var(--acc2)}
+  .kpi .l{font-size:12px;color:var(--dim);margin-top:4px}
+  footer{text-align:center;color:var(--dim);font-size:13px;padding:20px}
+</style>
+</head>
+<body>
+<header>
+  <h1>实战踩坑：电商 RAG 知识库 + 多Agent 客服系统二次开发记录</h1>
+  <div class="sub">从"跑通开源项目"到"检索可靠、可讲清楚"的完整过程</div>
+  <div class="tags">
+    <span>RAG</span><span>LangGraph</span><span>ChromaDB</span><span>Ollama</span><span>MCP</span><span>多Agent编排</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2><span class="n">1</span>背景：为什么做这个项目</h2>
+    <p>很多电商客服项目的痛点很典型：客服回复依赖人工经验、知识分散在商品数据和政策文档里、退货/订单这类高风险操作不能让模型完全自主。我基于开源的 <code>LangGraph-Retail-Assistant</code> 与 <code>ecommerce-retail-rag-mcp</code> 做二次开发，目标是把两件事做扎实：</p>
+    <ul>
+      <li><b>RAG 商品检索可靠</b>——用户问"有机牛油果"，能稳定召回正确商品，并给出出处。</li>
+      <li><b>多Agent 编排可用</b>——销售/客服分流 + Human-in-the-loop 退货审批，且本地能跑。</li>
+    </ul>
+    <div class="kpis">
+      <div class="kpi"><div class="v">9288</div><div class="l">真实商品入库</div></div>
+      <div class="kpi"><div class="v">100%</div><div class="l">Top-3 检索命中率</div></div>
+      <div class="kpi"><div class="v">~0.3s</div><div class="l">单次检索延迟</div></div>
+      <div class="kpi"><div class="v">30</div><div class="l">测试用例全过</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>坑一：建库与查询的嵌入模型不一致，检索"静默失败"</h2>
+    <p><b>现象</b>：向量库建好了，数据也有，但无论问什么，相似度检索都返回空或明显无关的结果，且<strong>不报任何错误</strong>。</p>
+    <p><b>排查</b>：分别打点建库和查询时实际使用的嵌入模型，发现维数对不上。</p>
+    <pre># 建库脚本 build_vector_db.py
+model = "mxbai-embed-large-v1"      # 1024 维
+
+# 查询端 tools.py
+model = "all-MiniLM-L6-v2"          # 384 维</pre>
+    <div class="err">维度不一致意味着：存进去的向量和查询向量无法在同一个空间比较相似度，检索自然全部失效——而且因为是"可运行但结果空白"，属于最难定位的静默故障。</div>
+    <h3>根因</h3>
+    <p>Chroma 在 <code>upsert</code> 时用建库模型定下集合的向量维数，查询时若向量维数对不上，轻则空结果、重则直接 <code>InvalidDimensionException</code>。</p>
+    <h3>解决</h3>
+    <p>把嵌入模型收敛为<strong>单一配置源</strong>，并加<strong>回归测试守卫</strong>防止再次漂移：</p>
+    <pre># config.py —— 唯一的模型事实来源
+EMBEDDING_MODEL = "nomic-embed-text"   # Ollama 本地, 768维, CPU 友好
+CHROMA_DIR = "vector_db"</pre>
+    <pre># tests/test_embedding_consistency.py
+def test_single_embedding_source():
+    # 断言：建库脚本与查询端都引用 config.EMBEDDING_MODEL，
+    # 不允许任何一处硬编码其他模型名。
+    ...</pre>
+    <div class="ok">修复后用 10 组典型电商查询（牛油果、酸奶、冷冻披萨……）验证，<b>Top-3 命中率 100%</b>。</div>
+    <p class="dim">结论：RAG 的"嵌入一致性"是第一顺位检查项，最好用单一常量 + 测试锁死，而不是靠人工记住。</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">3</span>坑二：多知识源的检索结果"拼接不等于融合"</h2>
+    <p>项目有<strong>商品目录</strong>（catalog_chunks）和<strong>政策文档</strong>（policies）两个向量集合。早期实现是"每个源各取 top-k，然后<strong>按源顺序拼接</strong>"。</p>
+    <div class="warn">问题：商品集有 9288 条、政策集只有 8 条。拼接后商品结果永远排前面，弱源（政策）的高相关召回被淹没；同一条内容跨源重复召回，上下文里噪音多、排序不稳定。</div>
+    <p><b>解决</b>：实现 <b>RRF（Reciprocal Rank Fusion）倒数排名融合</b>：</p>
+    <pre># RRF 核心：按"倒数排名"聚合多个源的排序信号
+score(doc) = Σ_sources  1 / (rank_in_source + K)   # K=60
+
+# 一条文档在多个源里都排得靠前 → 融合分高，天然去重
+def fuse(groups):
+    scores = {}
+    docs = {}
+    for group in groups:             # 每个源自己的 top-k
+        for rank, doc in enumerate(group):
+            key = doc["text"].lower()
+            scores[key] = scores.get(key, 0) + 1.0 / (60 + rank + 1)
+            docs.setdefault(key, doc)
+    return [docs[k] for k, _ in sorted(scores.items(),
+                                       key=lambda kv: kv[1], reverse=True)]</pre>
+    <div class="ok">
+      对比效果：同样一批查询，<b>RRF 返回更少的重复噪音、跨源高相关文档排在更前</b>；
+      用合成多源数据做单测，共享文档被正确去重并升至首位。融合算法本身可脱离服务单独可测。
+    </div>
+    <h3>延伸：chroma 0.5.x 的落盘坑</h3>
+    <p>进一步发现，<b>多线程并发 upsert 会让 chroma 0.5.x 丢失 HNSW 向量段</b>（sqlite/pickle 在，但查询报 <code>Cannot open header file</code>）。规避方法很直接：</p>
+    <ul>
+      <li><b>嵌入层</b>并发（网络 IO 密集，用 ThreadPool）</li>
+      <li><b>写入层</b>串行批量 add（避免并发触发 chroma 的段写缺陷）</li>
+    </ul>
+    <pre># 可行的灌库模式：线程嵌入 + 顺序批量写入
+with ThreadPoolExecutor(8) as ex:
+    vecs = list(ex.map(embed_text, chunk_docs))   # 并发取 embedding
+col.add(ids=ids, embeddings=vecs, documents=chunk_docs)  # 顺序 add</pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">4</span>坑三：Agent 编排框架的 API 迁移</h2>
+    <p>项目2 的 agent 示例基于已停产的 <code>adk</code> 包，官方新版本是 <code>google-adk</code>，API 变了。</p>
+    <pre># 旧（停产）        vs        # 新（官方）
+from adk.tools import Tool      from google.adk.agents import Agent, SequentialAgent
+                                from google.adk.tools import FunctionTool</pre>
+    <p>迁移时踩到一个细节：<code>SequentialAgent</code> 只接受 <code>sub_agents</code>，<code>tools</code> 参数属于 <code>Agent</code> / <code>LlmAgent</code>，照文档写会直接报参数不支持。</p>
+    <div class="warn">教训：升级第三方框架大版本时，先查官方迁移文档，不要照搬旧写法；用最小用例验证 API 签名。</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">5</span>总体复盘</h2>
+    <table>
+      <tr><th>类别</th><th>踩的坑</th><th>解法</th></tr>
+      <tr><td>RAG</td><td>嵌入模型不一致致静默失败</td><td>单一配置源 + 一致性测试</td></tr>
+      <tr><td>RAG</td><td>多源拼接排序不稳、重复</td><td>RRF 融合重排 + 去重</td></tr>
+      <tr><td>存储</td><td>chroma 0.5.x 并发写丢段</td><td>线程嵌入 + 顺序 add</td></tr>
+      <tr><td>编排</td><td>adk 旧 API 停产</td><td>迁移 google-adk 新 API</td></tr>
+      <tr><td>部署</td><td>远程模型依赖外网</td><td>Ollama 本地嵌入/生成</td></tr>
+    </table>
+    <p>这些坑的共同点：都是<strong>"能跑但结果不对 / 换环境就挂"</strong>的隐性工程问题，单靠功能测试覆盖不到，需要专门的检索评估与回归测试来兜底。这也是二开这类项目最有价值的部分——不是把功能做出来，而是把"可靠性"夯实。</p>
+  </div>
+
+</div>
+<footer>© 2026 · 电商 RAG + 多Agent 客服系统二次开发踩坑记录</footer>
+</body>
+</html>
